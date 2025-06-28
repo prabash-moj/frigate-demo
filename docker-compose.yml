@@ -49,6 +49,18 @@ services:
     networks:
       - frigate_network
 
+  face-capture:
+    build: ./face-capture
+    restart: unless-stopped
+    volumes:
+      - ./face-capture/storage:/app/storage
+    ports:
+      - "5002:5002"
+    environment:
+      - FLASK_ENV=development
+    networks:
+      - frigate_network
+
 networks:
   frigate_network:
     driver: bridge

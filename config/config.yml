@@ -16,8 +16,9 @@ model:
   height: 320
   input_tensor: nhwc
   input_pixel_format: rgb
-  model_path: /cpu_model.tflite  # Default CPU model
-  # model_path: /edgetpu_model.tflite  # For Coral TPU
+  # Model will be automatically selected based on detector:
+  # - CPU: /cpu_model.tflite
+  # - Coral TPU: /edgetpu_model.tflite
 
 # Camera configuration
 cameras:
@@ -26,9 +27,7 @@ cameras:
     ffmpeg:
       inputs:
         - path: rtsp://username:password@camera-ip:554/stream
-          input_args: -avoid_negative_ts make_zero -fflags nobuffer -flags low_delay
-            -strict experimental -fflags +genpts -stimeout 5000000 -rtsp_transport
-            tcp
+          input_args: -avoid_negative_ts make_zero -fflags nobuffer -flags low_delay -strict experimental -fflags +genpts -stimeout 5000000 -rtsp_transport tcp
           roles:
             - detect
     detect:
