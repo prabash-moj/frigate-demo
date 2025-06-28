@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  frigate:
+    container_name: frigate
+    image: ghcr.io/blakeblackshear/frigate:stable
+    restart: unless-stopped
+    privileged: true
+    devices:
+      - /dev/bus/usb:/dev/bus/usb  # For Coral TPU
+      - /dev/dri/renderD128  # For Intel QuickSync
+    volumes:
+      - ./config:/config
+      - ./storage:/media/frigate
+      - /etc/localtime:/etc/localtime:ro
+    ports:
+      - "5001:5000"  # Web UI (changed from 5000 to 5001)
+      - "1936:1935"  # RTMP feeds (changed from 1935 to 1936)
+    environment:
+      FRIGATE_RTSP_PASSWORD: "your_secure_password"
+    networks:
+      - frigate_network
+
+  double-take:
+    image: jakowenko/double-take:latest
+    restart: unless-stopped
+    volumes:
+      - ./config/double-take:/config
+      - ./media/known_faces:/doubletake/known_faces
+    environment:
+      - FRIGATE_CAMERAS=front_door
+      - FRIGATE_URL=http://frigate:5000
+      - FRIGATE_RTMP_URL=rtmp://frigate:1935
+      - DOUBLE_TAKE_API_KEY=your-secret-key
+    ports:
+      - "3000:3000"
+    depends_on:
+      - frigate
+    networks:
+      - frigate_network
+
+  compreface:
+    image: exadel/compreface:latest
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./compreface-data:/app_data
+    networks:
+      - frigate_network
+
+networks:
+  frigate_network:
+    driver: bridge

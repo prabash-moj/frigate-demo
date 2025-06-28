@@ -1,0 +1,67 @@
+mqtt:
+  enabled: false
+
+detectors:
+  # For CPU detection (slower)
+  cpu1:
+    type: cpu
+
+  # For Coral TPU (uncomment if you have one)
+  # coral:
+  #   type: edgetpu
+  #   device: usb
+
+model:
+  width: 320
+  height: 320
+  input_tensor: nhwc
+  input_pixel_format: rgb
+  model_path: /cpu_model.tflite  # Default CPU model
+  # model_path: /edgetpu_model.tflite  # For Coral TPU
+
+# Camera configuration
+cameras:
+  # Example camera - replace with your camera details
+  front_door:
+    ffmpeg:
+      inputs:
+        - path: rtsp://username:password@camera-ip:554/stream
+          input_args: -avoid_negative_ts make_zero -fflags nobuffer -flags low_delay
+            -strict experimental -fflags +genpts -stimeout 5000000 -rtsp_transport
+            tcp
+          roles:
+            - detect
+    detect:
+      enabled: true
+      width: 1280
+      height: 720
+      fps: 5
+    snapshots:
+      enabled: true
+      bounding_box: true
+      crop: true
+      height: 500
+      required_zones: []
+    objects:
+      track:
+        - person
+      filters:
+        person:
+          min_score: 0.7
+          threshold: 0.7
+
+# Optional: Motion masks
+# masks:
+#   front_door:
+#     - 0,0,100,0,100,100,0,100  # x1,y1,x2,y2,x3,y3,x4,y4
+
+# Optional: Zones
+# zones:
+#   front_porch:
+#     coordinates: 0,0,100,0,100,100,0,100
+#     filters:
+#       person:
+#         min_area: 5000
+#         max_area: 100000
+#         threshold: 0.8
+version: 0.15-1
