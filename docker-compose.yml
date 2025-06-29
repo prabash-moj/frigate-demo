@@ -12,10 +12,14 @@ services:
       - ./storage:/media/frigate
       - /etc/localtime:/etc/localtime:ro
     ports:
-      - "5001:5000"  # Web UI (changed from 5000 to 5001)
-      - "1936:1935"  # RTMP feeds (changed from 1935 to 1936)
+      - "5001:5000"  # Web UI
+      - "1936:1935"  # RTMP feeds
     environment:
       FRIGATE_RTSP_PASSWORD: "your_secure_password"
+      # Configure Frigate to use PostgreSQL
+      DB_URL: postgresql://frigate:dbpassword@postgres:5432/frigate_db
+    depends_on:
+      - postgres
     networks:
       - frigate_network
 
@@ -42,10 +46,21 @@ services:
     restart: unless-stopped
     ports:
       - "8000:8000"
-    volumes:
-      - ./compreface-data:/app_data
+    environment:
+      - POSTGRES_HOST=postgres
+      - POSTGRES_DB=compreface_db
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=dbpassword
+      - POSTGRES_PORT=5432
+    depends_on:
+      - postgres
     networks:
       - frigate_network
+    # Keep the volume for models and other data
+    volumes:
+      - ./compreface-data/models:/app_data/models
+      - ./compreface-data/uploads:/app_data/uploads
+      - ./compreface-data/logs:/app_data/logs
 
   face-capture:
     build: ./face-capture

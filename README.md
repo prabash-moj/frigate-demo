@@ -13,12 +13,18 @@ graph TD
     subgraph "Video Processing"
         A[IP Cameras] -->|RTSP/RTMP| B[Frigate NVR]
         B -->|Motion Events| D[Double Take]
-        B -->|Recordings| F[(Storage)]
+        B -->|Recordings| F[(PostgreSQL\nFrigate DB)]
+    end
+
+    subgraph "Database Layer"
+        F[(PostgreSQL\nServer)]
+        F <-->|Read/Write| B
+        F <-->|Read/Write| E
     end
 
     subgraph "Face Management"
         C[Face Capture App] -->|Register Faces| E[CompreFace]
-        E -->|Face Database| G[(PostgreSQL)]
+        E -->|Face Database| G[(PostgreSQL\nCompreFace DB)]
     end
 
     subgraph "Recognition & Alerts"
@@ -40,11 +46,13 @@ graph TD
     classDef service fill:#bbf,stroke:#333
     classDef storage fill:#bfb,stroke:#333
     classDef output fill:#fbb,stroke:#333
+    classDef database fill:#ddf,stroke:#333,stroke-dasharray: 5 5
 
     class A,C camera
     class B,D,E service
     class F,G storage
     class H output
+    class F database
 ```
 
 ### Diagram Explanation
@@ -67,22 +75,36 @@ graph TD
 
 ## Core Modules
 
-### 1. Frigate NVR
+### 1. PostgreSQL Database
+- **Purpose**: Centralized data storage for the entire system
+- **Features**:
+  - Separate databases for Frigate and CompreFace
+  - Secure user access controls
+  - Persistent storage for recordings and face data
+  - Automated backups and maintenance
+- **Port**: 5432 (Internal)
+- **Databases**:
+  - `frigate_db`: Stores video recordings and event data
+  - `compreface_db`: Stores face recognition data and models
+
+### 2. Frigate NVR
 - **Purpose**: Real-time object detection and video recording
 - **Features**:
   - Motion detection
   - Object detection (people, vehicles, animals, etc.)
   - 24/7 recording with AI-based event filtering
   - Hardware acceleration support (Intel QuickSync, NVIDIA, Coral TPU)
+  - PostgreSQL integration for event and recording storage
 - **Port**: 5001 (Web UI)
 
-### 2. CompreFace
+### 3. CompreFace
 - **Purpose**: Face recognition and management
 - **Features**:
   - Face detection and recognition
   - Face collection and management
   - REST API for integration
   - Web interface for administration
+  - PostgreSQL integration for face data storage
 - **Port**: 8000 (Web UI)
 
 ### 3. Face Capture App
@@ -99,6 +121,7 @@ graph TD
   - Connects Frigate with CompreFace
   - Manages face matching and alerts
   - Provides a unified API for face recognition
+  - Works with the shared PostgreSQL infrastructure
 - **Port**: 3000 (Web UI)
 
 ## Prerequisites
